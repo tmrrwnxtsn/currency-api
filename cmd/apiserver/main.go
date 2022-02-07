@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/BurntSushi/toml"
 	"github.com/tmrrwnxtsn/currency-api/internal/apiserver"
-	"github.com/tmrrwnxtsn/currency-api/internal/config"
 	"log"
 )
 
@@ -17,7 +16,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	cfg := config.New()
+	cfg := apiserver.NewConfig()
 	_, err := toml.DecodeFile(configPath, cfg)
 	if err != nil {
 		log.Fatalf("error occured while decoding config file: %s", err.Error())
