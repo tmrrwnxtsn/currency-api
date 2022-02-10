@@ -22,8 +22,7 @@ func main() {
 		log.Fatalf("error occured while decoding config file: %s", err.Error())
 	}
 
-	srv := apiserver.New(cfg)
-	if err = srv.Run(); err != nil {
-		log.Fatalf("error occured while running http server: %s", err.Error())
+	if err = apiserver.Start(cfg); err != nil {
+		log.Fatalf("error occured while starting apiserver: %s", err.Error())
 	}
 }
