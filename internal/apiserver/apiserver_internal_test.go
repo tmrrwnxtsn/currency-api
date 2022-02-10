@@ -14,7 +14,7 @@ func TestAPIServer_HandleCreate(t *testing.T) {
 	srv := New(cfg)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/create", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/create", nil)
 
 	srv.handleCreate().ServeHTTP(rec, req)
 
@@ -28,7 +28,7 @@ func TestAPIServer_HandleConvert(t *testing.T) {
 	srv := New(cfg)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/convert", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/convert", nil)
 
 	srv.handleConvert().ServeHTTP(rec, req)
 
