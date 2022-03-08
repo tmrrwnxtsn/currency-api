@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tmrrwnxtsn/currency-api/internal/model"
 	"testing"
+	"time"
 )
 
 func TestRate_Validate(t *testing.T) {
@@ -59,7 +60,16 @@ func TestRate_Validate(t *testing.T) {
 			name: "negative rate value",
 			r: func() *model.Rate {
 				testRate := model.TestRate(t)
-				testRate.Value = -1
+				testRate.Value = -1.0
+				return testRate
+			},
+			isValid: false,
+		},
+		{
+			name: "invalid last update time",
+			r: func() *model.Rate {
+				testRate := model.TestRate(t)
+				testRate.LastUpdateTime = time.Now().Add(time.Second * 10)
 				return testRate
 			},
 			isValid: false,

@@ -10,7 +10,7 @@ import (
 
 func TestRateRepository_Create(t *testing.T) {
 	db, teardown := sqlstore.TestDB(t, databaseURL)
-	defer teardown("exchange_rate")
+	defer teardown("rate")
 
 	st := sqlstore.New(db)
 
@@ -21,21 +21,30 @@ func TestRateRepository_Create(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestRateRepository_FindByFirstCurrency(t *testing.T) {
+func TestRateRepository_Find(t *testing.T) {
 	db, teardown := sqlstore.TestDB(t, databaseURL)
-	defer teardown("exchange_rate")
+	defer teardown("rate")
 
 	st := sqlstore.New(db)
+	r1 := model.TestRate(t)
+	_ = st.Rate().Create(r1)
 
-	firstCurrency := "USD"
-	_, err := st.Rate().FindByFirstCurrency(firstCurrency)
+	r2, err := st.Rate().Find(r1.ID)
+	assert.NoError(t, err)
+	assert.NotNil(t, r2)
+}
+
+func TestRateRepository_FindByCurrencies(t *testing.T) {
+	db, teardown := sqlstore.TestDB(t, databaseURL)
+	defer teardown("rate")
+
+	st := sqlstore.New(db)
+	r1 := model.TestRate(t)
+	_, err := st.Rate().FindByCurrencies(r1.FirstCurrency, r1.SecondCurrency)
 	assert.EqualError(t, err, store.ErrRowNotFound.Error())
 
-	testRate := model.TestRate(t)
-	testRate.FirstCurrency = firstCurrency
-	_ = st.Rate().Create(testRate)
-
-	rate, err := st.Rate().FindByFirstCurrency(firstCurrency)
+	_ = st.Rate().Create(r1)
+	r2, err := st.Rate().FindByCurrencies(r1.FirstCurrency, r1.SecondCurrency)
 	assert.NoError(t, err)
-	assert.NotNil(t, rate)
+	assert.NotNil(t, r2)
 }

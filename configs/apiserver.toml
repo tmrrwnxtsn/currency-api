@@ -1,3 +1,4 @@
 bind_addr = ":8080"
 log_level = "info"
 database_url = "host=localhost dbname=currencyapi user=postgres password=qwerty sslmode=disable"
+currency_api_key = "b2d66c60-9a47-11ec-bde0-db97a92aaea8"

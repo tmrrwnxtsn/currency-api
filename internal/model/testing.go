@@ -11,7 +11,7 @@ func TestRate(t *testing.T) *Rate {
 	return &Rate{
 		FirstCurrency:  "USD",
 		SecondCurrency: "RUB",
-		Value:          85,
+		Value:          121.41,
 		LastUpdateTime: time.Now(),
 	}
 }

@@ -7,6 +7,6 @@ run: build
 	./apiserver
 
 test:
-	go test -v -race -timeout 30s ./...
+	go test -v -timeout 30s ./...
 
 .DEFAULT_GOAL := run

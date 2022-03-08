@@ -17,3 +17,6 @@
 
 # Goland
 .idea/
+
+# Environment variables
+*.env

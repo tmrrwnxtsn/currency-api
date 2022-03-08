@@ -22,7 +22,7 @@ func (s *Store) Rate() store.RateRepository {
 
 	s.rateRepository = &RateRepository{
 		store: s,
-		rates: make(map[string]*model.Rate),
+		rates: make(map[int]*model.Rate),
 	}
 
 	return s.rateRepository
