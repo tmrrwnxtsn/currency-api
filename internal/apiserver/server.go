@@ -60,11 +60,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-	s.router.Use(handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost}),
-	))
-
+	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 	s.router.HandleFunc("/api/create", s.handleCreateRate()).Methods("POST")
 	s.router.HandleFunc("/api/convert", s.handleConvertCurrency()).Methods("GET")
 }
@@ -89,9 +85,21 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 		rw := &responseWriter{w, http.StatusOK}
 		next.ServeHTTP(rw, r)
 
-		logger.Infof(
+		var level logrus.Level
+		switch {
+		case rw.code >= 500:
+			level = logrus.ErrorLevel
+		case rw.code >= 400:
+			level = logrus.WarnLevel
+		default:
+			level = logrus.InfoLevel
+		}
+
+		logger.Logf(
+			level,
 			"completed with %d %s in %v",
-			rw.code, http.StatusText(rw.code),
+			rw.code,
+			http.StatusText(rw.code),
 			time.Now().Sub(start),
 		)
 	})
