@@ -24,7 +24,7 @@ func TestDB(t *testing.T, databaseURL string) (*sql.DB, func(...string)) {
 			query := fmt.Sprintf("TRUNCATE %s CASCADE", strings.Join(tables, ", "))
 			_, err = db.Exec(query)
 			if err != nil {
-				t.Fatal()
+				t.Fatal(err)
 			}
 		}
 

@@ -154,7 +154,7 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 		}
 
 		if err = s.store.Rate().Create(rate); err != nil {
-			s.error(w, http.StatusUnprocessableEntity, err)
+			s.error(w, http.StatusInternalServerError, err)
 			return
 		}
 

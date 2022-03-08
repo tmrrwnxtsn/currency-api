@@ -40,6 +40,14 @@ func TestServer_HandleCreateRate(t *testing.T) {
 			expectedCode: http.StatusCreated,
 		},
 		{
+			name: "already exists",
+			payload: map[string]string{
+				"first_currency":  "USD",
+				"second_currency": "RUB",
+			},
+			expectedCode: http.StatusConflict,
+		},
+		{
 			name:         "invalid payload",
 			payload:      "invalid",
 			expectedCode: http.StatusBadRequest,

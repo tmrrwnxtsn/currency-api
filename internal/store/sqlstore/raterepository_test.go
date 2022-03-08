@@ -6,6 +6,7 @@ import (
 	"github.com/tmrrwnxtsn/currency-api/internal/store"
 	"github.com/tmrrwnxtsn/currency-api/internal/store/sqlstore"
 	"testing"
+	"time"
 )
 
 func TestRateRepository_Create(t *testing.T) {
@@ -14,11 +15,42 @@ func TestRateRepository_Create(t *testing.T) {
 
 	st := sqlstore.New(db)
 
-	testRate := model.TestRate(t)
-	err := st.Rate().Create(testRate)
+	testCases := []struct {
+		name    string
+		r       func() *model.Rate
+		isValid bool
+	}{
+		{
+			name: "valid",
+			r: func() *model.Rate {
+				return model.TestRate(t)
+			},
+			isValid: true,
+		},
+		{
+			name: "invalid",
+			r: func() *model.Rate {
+				return &model.Rate{
+					FirstCurrency:  "dollar",
+					SecondCurrency: "ruble",
+					Value:          -1,
+					LastUpdateTime: time.Now().Add(time.Second * 10),
+				}
+			},
+			isValid: false,
+		},
+	}
 
-	assert.NotNil(t, testRate)
-	assert.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := st.Rate().Create(tc.r())
+			if tc.isValid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestRateRepository_Find(t *testing.T) {
