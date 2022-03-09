@@ -84,9 +84,32 @@ func TestServer_HandleConvertCurrency(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		payload      interface{}
+		payload      map[string]string
 		expectedCode int
 	}{
+		{
+			name:         "missing params",
+			payload:      map[string]string{},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "invalid value",
+			payload: map[string]string{
+				"currency_from": r.FirstCurrency,
+				"currency_to":   r.SecondCurrency,
+				"value":         "invalid",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+		{
+			name: "invalid currency",
+			payload: map[string]string{
+				"currency_from": "dollar",
+				"currency_to":   "ruble",
+				"value":         "10",
+			},
+			expectedCode: http.StatusNotFound,
+		},
 		{
 			name: "valid",
 			payload: map[string]string{
@@ -96,29 +119,18 @@ func TestServer_HandleConvertCurrency(t *testing.T) {
 			},
 			expectedCode: http.StatusOK,
 		},
-		{
-			name:         "invalid payload",
-			payload:      "invalid",
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			name: "invalid params",
-			payload: map[string]string{
-				"first_currency":  "dollar",
-				"second_currency": "ruble",
-				"value":           "-1",
-			},
-			expectedCode: http.StatusNotFound,
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			req, _ := http.NewRequest(http.MethodGet, "/api/convert", nil)
 
-			req, _ := http.NewRequest(http.MethodGet, "/api/convert", b)
+			q := req.URL.Query()
+			for pkey, pvalue := range tc.payload {
+				q.Add(pkey, pvalue)
+			}
+			req.URL.RawQuery = q.Encode()
 
 			srv.ServeHTTP(rec, req)
 			assert.Equal(t, tc.expectedCode, rec.Code)

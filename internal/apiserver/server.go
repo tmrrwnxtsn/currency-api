@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
@@ -11,6 +12,7 @@ import (
 	"github.com/tmrrwnxtsn/currency-api/internal/model"
 	"github.com/tmrrwnxtsn/currency-api/internal/store"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,6 +20,11 @@ import (
 const (
 	currencyAPIURLTemplate        = "https://freecurrencyapi.net/api/v2/latest?apikey=%s&base_currency=%s"
 	ctxKeyRequestID        ctxKey = iota
+)
+
+var (
+	errMissingRequiredParams = errors.New("one or more required parameters are missing")
+	errWrongValueParam       = errors.New("parameter 'value' is wrong")
 )
 
 type ctxKey int8
@@ -60,7 +67,11 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	s.router.Use(s.setRequestID)
 	s.router.Use(s.logRequest)
-	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
+	s.router.Use(handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedHeaders([]string{"*"}),
+		handlers.AllowedMethods([]string{"*"}),
+	))
 	s.router.HandleFunc("/api/create", s.handleCreateRate()).Methods("POST")
 	s.router.HandleFunc("/api/convert", s.handleConvertCurrency()).Methods("GET")
 }
@@ -184,10 +195,23 @@ func (s *server) handleConvertCurrency() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
-		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-			s.error(w, http.StatusBadRequest, err)
+		q := r.URL.Query()
+
+		if !(q.Has("currency_from") && q.Has("currency_to") && q.Has("value")) {
+			s.error(w, http.StatusBadRequest, errMissingRequiredParams)
 			return
+		}
+
+		valueFloat64, err := strconv.ParseFloat(q.Get("value"), 32)
+		if err != nil {
+			s.error(w, http.StatusUnprocessableEntity, errWrongValueParam)
+			return
+		}
+
+		req := &request{
+			CurrencyFrom: q.Get("currency_from"),
+			CurrencyTo:   q.Get("currency_to"),
+			Value:        float32(valueFloat64),
 		}
 
 		rate, err := s.store.Rate().FindByCurrencies(req.CurrencyFrom, req.CurrencyTo)
@@ -216,6 +240,7 @@ func (s *server) error(w http.ResponseWriter, statusCode int, err error) {
 }
 
 func (s *server) respond(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-type", "application/json; charset=UTF-8")
 	w.WriteHeader(statusCode)
 
 	if data != nil {
