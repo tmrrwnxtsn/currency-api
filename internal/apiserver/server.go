@@ -17,10 +17,7 @@ import (
 	"time"
 )
 
-const (
-	currencyAPIURLTemplate        = "https://freecurrencyapi.net/api/v2/latest?apikey=%s&base_currency=%s"
-	ctxKeyRequestID        ctxKey = iota
-)
+const ctxKeyRequestID ctxKey = iota
 
 var (
 	errMissingRequiredParams = errors.New("one or more required parameters are missing")
@@ -33,7 +30,7 @@ type server struct {
 	router         *mux.Router
 	logger         *logrus.Logger
 	store          store.Store
-	currencyAPIKey string
+	currencyApiUrl string
 }
 
 type freeAPIResponse struct {
@@ -45,12 +42,12 @@ type query struct {
 	BaseCurrency string `json:"base_currency"`
 }
 
-func newServer(store store.Store, currencyAPIKey string) *server {
+func newServer(store store.Store, currencyApiUrl string) *server {
 	srv := &server{
 		router:         mux.NewRouter(),
 		logger:         logrus.New(),
 		store:          store,
-		currencyAPIKey: currencyAPIKey,
+		currencyApiUrl: currencyApiUrl,
 	}
 
 	srv.configureRouter()
@@ -139,9 +136,9 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 			Timeout: time.Second * 10,
 		}
 
-		url := fmt.Sprintf(currencyAPIURLTemplate, s.currencyAPIKey, req.FirstCurrency)
+		currencyApiRequestUrl := fmt.Sprintf(s.currencyApiUrl, req.FirstCurrency)
 
-		res, err := netClient.Get(url)
+		res, err := netClient.Get(currencyApiRequestUrl)
 		if err != nil {
 			s.error(w, http.StatusBadRequest, err)
 			return
@@ -244,6 +241,6 @@ func (s *server) respond(w http.ResponseWriter, statusCode int, data interface{}
 	w.WriteHeader(statusCode)
 
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		_ = json.NewEncoder(w).Encode(data)
 	}
 }

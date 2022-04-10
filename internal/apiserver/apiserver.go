@@ -15,7 +15,7 @@ func Start(config *Config) error {
 
 	store := sqlstore.New(db)
 
-	srv := newServer(store, config.CurrencyAPIKey)
+	srv := newServer(store, config.CurrencyAPIUrl)
 
 	return http.ListenAndServe(config.BindAddr, srv)
 }

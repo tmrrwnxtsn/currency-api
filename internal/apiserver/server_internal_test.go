@@ -12,19 +12,21 @@ import (
 	"testing"
 )
 
-var currencyAPIKey string
+var testCurrencyAPIUrl string
 
 func TestMain(m *testing.M) {
-	currencyAPIKey = os.Getenv("TEST_CURRENCY_API_KEY")
-	if currencyAPIKey == "" {
-		currencyAPIKey = "b2d66c60-9a47-11ec-bde0-db97a92aaea8"
+	testCurrencyAPIKey := os.Getenv("TEST_CURRENCY_API_KEY")
+	if testCurrencyAPIKey == "" {
+		testCurrencyAPIKey = "b2d66c60-9a47-11ec-bde0-db97a92aaea8"
 	}
+
+	testCurrencyAPIUrl = "https://freecurrencyapi.net/api/v2/latest?apikey=" + testCurrencyAPIKey + "&base_currency=%s"
 
 	os.Exit(m.Run())
 }
 
 func TestServer_HandleCreateRate(t *testing.T) {
-	srv := newServer(teststore.New(), currencyAPIKey)
+	srv := newServer(teststore.New(), testCurrencyAPIUrl)
 
 	testCases := []struct {
 		name         string
@@ -66,7 +68,7 @@ func TestServer_HandleCreateRate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
-			json.NewEncoder(b).Encode(tc.payload)
+			_ = json.NewEncoder(b).Encode(tc.payload)
 
 			req, _ := http.NewRequest(http.MethodPost, "/api/create", b)
 
@@ -77,7 +79,7 @@ func TestServer_HandleCreateRate(t *testing.T) {
 }
 
 func TestServer_HandleConvertCurrency(t *testing.T) {
-	srv := newServer(teststore.New(), currencyAPIKey)
+	srv := newServer(teststore.New(), testCurrencyAPIUrl)
 
 	r := model.TestRate(t)
 	_ = srv.store.Rate().Create(r)
