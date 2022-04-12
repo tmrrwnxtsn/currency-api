@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"github.com/tmrrwnxtsn/currency-api/internal/config"
 	"github.com/tmrrwnxtsn/currency-api/internal/model"
 	"github.com/tmrrwnxtsn/currency-api/internal/store"
 	"net/http"
@@ -27,13 +28,13 @@ var (
 type ctxKey int8
 
 type server struct {
-	router         *mux.Router
-	logger         *logrus.Logger
-	store          store.Store
-	currencyApiUrl string
+	config *config.Config
+	router *mux.Router
+	logger *logrus.Logger
+	store  store.Store
 }
 
-type freeAPIResponse struct {
+type currencyApiResponse struct {
 	Query query              `json:"query"`
 	Data  map[string]float32 `json:"data"`
 }
@@ -42,12 +43,12 @@ type query struct {
 	BaseCurrency string `json:"base_currency"`
 }
 
-func newServer(store store.Store, currencyApiUrl string) *server {
+func newServer(config *config.Config, store store.Store, logger *logrus.Logger) *server {
 	srv := &server{
-		router:         mux.NewRouter(),
-		logger:         logrus.New(),
-		store:          store,
-		currencyApiUrl: currencyApiUrl,
+		router: mux.NewRouter(),
+		logger: logger,
+		store:  store,
+		config: config,
 	}
 
 	srv.configureRouter()
@@ -136,9 +137,14 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 			Timeout: time.Second * 10,
 		}
 
-		currencyApiRequestUrl := fmt.Sprintf(s.currencyApiUrl, req.FirstCurrency)
+		// request to the external currency conversion API for the rates
+		rateApiRequestUrl := fmt.Sprintf(
+			"https://freecurrencyapi.net/api/v2/latest?apikey=%s&base_currency=%s",
+			s.config.CurrencyAPIKey,
+			req.FirstCurrency,
+		)
 
-		res, err := netClient.Get(currencyApiRequestUrl)
+		res, err := netClient.Get(rateApiRequestUrl)
 		if err != nil {
 			s.error(w, http.StatusBadRequest, err)
 			return
@@ -150,7 +156,7 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 			return
 		}
 
-		freeAPIRes := &freeAPIResponse{}
+		freeAPIRes := &currencyApiResponse{}
 		if err = json.NewDecoder(res.Body).Decode(freeAPIRes); err != nil {
 			s.error(w, http.StatusUnprocessableEntity, err)
 			return

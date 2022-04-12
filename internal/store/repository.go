@@ -12,4 +12,10 @@ type RateRepository interface {
 
 	// FindByCurrencies ...
 	FindByCurrencies(string, string) (*model.Rate, error)
+
+	// FindAll ...
+	FindAll() ([]*model.Rate, error)
+
+	// Update ...
+	Update(*model.Rate) error
 }

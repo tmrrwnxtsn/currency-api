@@ -41,3 +41,25 @@ func (r *RateRepository) FindByCurrencies(firstCurrency, secondCurrency string) 
 
 	return nil, store.ErrRowNotFound
 }
+
+func (r *RateRepository) FindAll() ([]*model.Rate, error) {
+	var rates []*model.Rate
+
+	for id, rate := range r.rates {
+		rate.ID = id
+		rates = append(rates, rate)
+	}
+
+	return rates, nil
+}
+
+func (r *RateRepository) Update(rate *model.Rate) error {
+	_, err := r.Find(rate.ID)
+	if err != nil {
+		return err
+	}
+
+	r.rates[rate.ID] = rate
+
+	return nil
+}

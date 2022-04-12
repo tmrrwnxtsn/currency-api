@@ -71,3 +71,62 @@ func TestRateRepository_FindByCurrencies(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, r2)
 }
+
+func TestRateRepository_FindAll(t *testing.T) {
+	st := teststore.New()
+
+	rates := []*model.Rate{
+		{
+			FirstCurrency:  "USD",
+			SecondCurrency: "RUB",
+			Value:          75.1,
+			LastUpdateTime: time.Now(),
+		},
+		{
+			FirstCurrency:  "EUR",
+			SecondCurrency: "USD",
+			Value:          1.1,
+			LastUpdateTime: time.Now(),
+		},
+		{
+			FirstCurrency:  "BRL",
+			SecondCurrency: "CAD",
+			Value:          31.51,
+			LastUpdateTime: time.Now(),
+		},
+	}
+
+	for _, rate := range rates {
+		err := st.Rate().Create(rate)
+		assert.NoError(t, err)
+	}
+
+	rates, err := st.Rate().FindAll()
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(rates))
+}
+
+func TestRateRepository_Update(t *testing.T) {
+	st := teststore.New()
+
+	r := model.TestRate(t)
+	err := st.Rate().Create(r)
+	assert.NoError(t, err)
+
+	rUpd := &model.Rate{
+		ID:             r.ID,
+		FirstCurrency:  "EUR",
+		SecondCurrency: "USD",
+		Value:          1.1,
+		LastUpdateTime: r.LastUpdateTime,
+	}
+
+	err = st.Rate().Update(rUpd)
+	assert.NoError(t, err)
+
+	rFind, err := st.Rate().Find(r.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, rUpd.FirstCurrency, rFind.FirstCurrency)
+	assert.Equal(t, rUpd.SecondCurrency, rFind.SecondCurrency)
+	assert.Equal(t, rUpd.Value, rFind.Value)
+}
