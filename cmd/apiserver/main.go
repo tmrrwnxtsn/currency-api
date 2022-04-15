@@ -30,6 +30,6 @@ func main() {
 	}
 
 	if err := apiserver.Start(cfg); err != nil {
-		log.Fatalf("error occured while starting apiserver: %s", err.Error())
+		log.Fatalf("error occured while starting API server: %s", err.Error())
 	}
 }

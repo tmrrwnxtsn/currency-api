@@ -34,15 +34,6 @@ type server struct {
 	store  store.Store
 }
 
-type currencyApiResponse struct {
-	Query query              `json:"query"`
-	Data  map[string]float32 `json:"data"`
-}
-
-type query struct {
-	BaseCurrency string `json:"base_currency"`
-}
-
 func newServer(config *config.Config, store store.Store, logger *logrus.Logger) *server {
 	srv := &server{
 		router: mux.NewRouter(),
@@ -53,7 +44,7 @@ func newServer(config *config.Config, store store.Store, logger *logrus.Logger) 
 
 	srv.configureRouter()
 
-	srv.logger.Info("starting API server")
+	srv.logger.Info("API server started")
 
 	return srv
 }
@@ -129,47 +120,24 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 
 		rate, _ := s.store.Rate().FindByCurrencies(strings.ToUpper(req.FirstCurrency), strings.ToUpper(req.SecondCurrency))
 		if rate != nil {
-			s.error(w, http.StatusConflict, fmt.Errorf("rate for '%s'-'%s' already exists", req.FirstCurrency, req.SecondCurrency))
+			s.error(w, http.StatusConflict, fmt.Errorf("rate for %s-%s already exists", req.FirstCurrency, req.SecondCurrency))
 			return
 		}
 
-		netClient := http.Client{
-			Timeout: time.Second * 10,
-		}
-
-		// request to the external currency conversion API for the rates
-		rateApiRequestUrl := fmt.Sprintf(
-			"https://freecurrencyapi.net/api/v2/latest?apikey=%s&base_currency=%s",
-			s.config.CurrencyAPIKey,
-			req.FirstCurrency,
-		)
-
-		res, err := netClient.Get(rateApiRequestUrl)
+		res, err := getCurrencyRates(s.config.CurrencyAPIKey, req.FirstCurrency)
 		if err != nil {
-			s.error(w, http.StatusBadRequest, err)
-			return
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode > 299 {
-			s.error(w, res.StatusCode, fmt.Errorf("response failed with status code: %d and\nbody: %s\n", res.StatusCode, res.Body))
+			s.error(w, http.StatusUnprocessableEntity, fmt.Errorf("error occurred while getting the rate info for the currency %s: %s", req.FirstCurrency, req.SecondCurrency))
 			return
 		}
 
-		freeAPIRes := &currencyApiResponse{}
-		if err = json.NewDecoder(res.Body).Decode(freeAPIRes); err != nil {
-			s.error(w, http.StatusUnprocessableEntity, err)
-			return
-		}
-
-		exchangeRateValue, ok := freeAPIRes.Data[req.SecondCurrency]
+		exchangeRateValue, ok := res.Data[req.SecondCurrency]
 		if !ok {
-			s.error(w, http.StatusUnprocessableEntity, fmt.Errorf("currency '%s' not found", req.SecondCurrency))
+			s.error(w, http.StatusUnprocessableEntity, fmt.Errorf("currency %s not found", req.SecondCurrency))
 			return
 		}
 
 		rate = &model.Rate{
-			FirstCurrency:  freeAPIRes.Query.BaseCurrency,
+			FirstCurrency:  res.Query.BaseCurrency,
 			SecondCurrency: req.SecondCurrency,
 			Value:          exchangeRateValue,
 			LastUpdateTime: time.Now(),
