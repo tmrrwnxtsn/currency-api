@@ -61,7 +61,7 @@ func (s *server) configureRouter() {
 		handlers.AllowedHeaders([]string{"*"}),
 		handlers.AllowedMethods([]string{"*"}),
 	))
-	s.router.HandleFunc("/api/create", s.handleCreateRate()).Methods("POST")
+	s.router.HandleFunc("/api/rate", s.handleCreateRate()).Methods("POST")
 	s.router.HandleFunc("/api/convert", s.handleConvertCurrency()).Methods("GET")
 }
 
