@@ -1,0 +1,157 @@
+basePath: /api/v1
+definitions:
+  apiserver.convertCurrencyQuery:
+    properties:
+      currency_from:
+        example: RUB
+        type: string
+      currency_to:
+        example: RUB
+        type: string
+      value:
+        example: "123.321"
+        type: string
+    type: object
+  apiserver.convertCurrencyResponse:
+    properties:
+      conversion_result:
+        example: "123.321"
+        type: string
+      last_update_time:
+        example: "2019-11-09T21:21:46+00:00"
+        type: string
+      query:
+        $ref: '#/definitions/apiserver.convertCurrencyQuery'
+    type: object
+  apiserver.createRateQuery:
+    properties:
+      first_currency:
+        example: RUB
+        type: string
+      second_currency:
+        example: USD
+        type: string
+    type: object
+  apiserver.errorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Rate:
+    properties:
+      first_currency:
+        example: RUB
+        type: string
+      id:
+        example: 1
+        type: integer
+      last_update_time:
+        example: "2019-11-09T21:21:46+00:00"
+        type: string
+      second_currency:
+        example: USD
+        type: string
+      value:
+        example: 75.4
+        type: number
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a simple currency API that allows you to create exchange rates
+    and convert values from one currency to another.
+  license:
+    name: The MIT License (MIT)
+    url: https://mit-license.org/
+  termsOfService: http://swagger.io/terms/
+  title: Simple Currency API
+  version: "1.0"
+paths:
+  /convert:
+    get:
+      consumes:
+      - application/json
+      description: convert the value from one currency to another according to the
+        exchange rate
+      parameters:
+      - description: The currency whose value will be converted to another currency
+        in: query
+        name: currency_from
+        required: true
+        type: string
+      - description: The currency to which the value from the first currency will
+          be converted
+        in: query
+        name: currency_to
+        required: true
+        type: string
+      - description: The value that will be converted from one currency to another
+        in: query
+        name: value
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+          schema:
+            $ref: '#/definitions/apiserver.convertCurrencyResponse'
+        "400":
+          description: Missing parameters
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "404":
+          description: There is no record of the exchange rate
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "422":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+      summary: Currency conversion
+      tags:
+      - other
+  /rate:
+    post:
+      consumes:
+      - application/json
+      description: create a record of the exchange rate between two currencies
+      parameters:
+      - description: An exchange rate information
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/apiserver.createRateQuery'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Ok
+          schema:
+            $ref: '#/definitions/model.Rate'
+        "400":
+          description: Missing parameters or invalid payload
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "409":
+          description: An exchange rate record with these currencies already exists
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "422":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apiserver.errorResponse'
+      summary: Create an exchange rate
+      tags:
+      - rate
+swagger: "2.0"

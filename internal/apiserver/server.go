@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/tmrrwnxtsn/currency-api/docs"
 	"github.com/tmrrwnxtsn/currency-api/internal/config"
 	"github.com/tmrrwnxtsn/currency-api/internal/model"
 	"github.com/tmrrwnxtsn/currency-api/internal/store"
@@ -23,6 +25,7 @@ const ctxKeyRequestID ctxKey = iota
 var (
 	errMissingRequiredParams = errors.New("one or more required parameters are missing")
 	errWrongValueParam       = errors.New("parameter 'value' is wrong")
+	errIdenticalCurrencies   = errors.New("the exchange rate should contain information about different currencies")
 )
 
 type ctxKey int8
@@ -61,8 +64,12 @@ func (s *server) configureRouter() {
 		handlers.AllowedHeaders([]string{"*"}),
 		handlers.AllowedMethods([]string{"*"}),
 	))
-	s.router.HandleFunc("/api/rate", s.handleCreateRate()).Methods("POST")
-	s.router.HandleFunc("/api/convert", s.handleConvertCurrency()).Methods("GET")
+
+	s.router.HandleFunc("/api/v1/rate", s.handleCreateRate()).Methods("POST")
+	s.router.HandleFunc("/api/v1/convert", s.handleConvertCurrency()).Methods("GET")
+
+	// swagger documentation
+	s.router.PathPrefix("/docs/").Handler(httpSwagger.WrapHandler)
 }
 
 func (s server) setRequestID(next http.Handler) http.Handler {
@@ -105,28 +112,51 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) handleCreateRate() http.HandlerFunc {
-	type request struct {
-		FirstCurrency  string `json:"first_currency"`
-		SecondCurrency string `json:"second_currency"`
-	}
+type createRateQuery struct {
+	FirstCurrency  string `json:"first_currency" example:"RUB"`
+	SecondCurrency string `json:"second_currency" example:"USD"`
+}
 
+// handleCreateRate godoc
+// @Summary      Create an exchange rate
+// @Description  create a record of the exchange rate between two currencies
+// @Tags         rate
+// @Accept       json
+// @Produce      json
+// @Param        input  body      createRateQuery  true  "An exchange rate information"
+// @Success      201    {object}  model.Rate       "Ok"
+// @Failure      400    {object}  errorResponse    "Missing parameters or invalid payload"
+// @Failure      409    {object}  errorResponse    "An exchange rate record with these currencies already exists"
+// @Failure      422    {object}  errorResponse    "Invalid parameters"
+// @Failure      500    {object}  errorResponse
+// @Router       /rate [post]
+func (s *server) handleCreateRate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		req := &request{}
+		req := &createRateQuery{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 			s.error(w, http.StatusBadRequest, err)
 			return
 		}
 
-		rate, _ := s.store.Rate().FindByCurrencies(strings.ToUpper(req.FirstCurrency), strings.ToUpper(req.SecondCurrency))
-		if rate != nil {
-			s.error(w, http.StatusConflict, fmt.Errorf("rate for %s-%s already exists", req.FirstCurrency, req.SecondCurrency))
+		if req.FirstCurrency == "" || req.SecondCurrency == "" {
+			s.error(w, http.StatusBadRequest, errMissingRequiredParams)
 			return
 		}
 
-		res, err := getCurrencyRates(s.config.CurrencyAPIKey, req.FirstCurrency)
+		if req.FirstCurrency == req.SecondCurrency {
+			s.error(w, http.StatusUnprocessableEntity, errIdenticalCurrencies)
+			return
+		}
+
+		rate, _ := s.store.Rate().FindByCurrencies(strings.ToUpper(req.FirstCurrency), strings.ToUpper(req.SecondCurrency))
+		if rate != nil {
+			s.error(w, http.StatusConflict, fmt.Errorf("the exchange rate record for %s-%s already exists", req.FirstCurrency, req.SecondCurrency))
+			return
+		}
+
+		res, err := getExchangeRates(s.config.CurrencyAPIKey, req.FirstCurrency)
 		if err != nil {
-			s.error(w, http.StatusUnprocessableEntity, fmt.Errorf("error occurred while getting the rate info for the currency %s: %s", req.FirstCurrency, req.SecondCurrency))
+			s.error(w, http.StatusUnprocessableEntity, fmt.Errorf("error occurred while getting exchange rates for the currency %s: %s", req.FirstCurrency, err.Error()))
 			return
 		}
 
@@ -152,22 +182,36 @@ func (s *server) handleCreateRate() http.HandlerFunc {
 	}
 }
 
+type convertCurrencyQuery struct {
+	CurrencyFrom string  `json:"currency_from" example:"RUB"`
+	CurrencyTo   string  `json:"currency_to" example:"RUB"`
+	Value        float32 `json:"value,string" example:"123.321"`
+}
+
+type convertCurrencyResponse struct {
+	Query            convertCurrencyQuery `json:"query"`
+	ConversionResult float32              `json:"conversion_result,string" example:"123.321"`
+	LastUpdateTime   time.Time            `json:"last_update_time" example:"2019-11-09T21:21:46+00:00"`
+}
+
+// handleConvertCurrency godoc
+// @Summary      Currency conversion
+// @Description  convert the value from one currency to another according to the exchange rate
+// @Tags         other
+// @Accept       json
+// @Produce      json
+// @Param        currency_from  query     string                   true  "The currency whose value will be converted to another currency"
+// @Param        currency_to    query     string                   true  "The currency to which the value from the first currency will be converted"
+// @Param        value          query     number                   true  "The value that will be converted from one currency to another"
+// @Success      200            {object}  convertCurrencyResponse  "Ok"
+// @Failure      400            {object}  errorResponse            "Missing parameters"
+// @Failure      404            {object}  errorResponse            "There is no record of the exchange rate"
+// @Failure      422            {object}  errorResponse            "Invalid parameters"
+// @Failure      500            {object}  errorResponse
+// @Router       /convert [get]
 func (s *server) handleConvertCurrency() http.HandlerFunc {
-	type request struct {
-		CurrencyFrom string  `json:"currency_from"`
-		CurrencyTo   string  `json:"currency_to"`
-		Value        float32 `json:"value,string"`
-	}
-
-	type response struct {
-		Query            request   `json:"query"`
-		ConvertingResult float32   `json:"converting_result,string"`
-		LastUpdateTime   time.Time `json:"last_update_time"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-
 		if !(q.Has("currency_from") && q.Has("currency_to") && q.Has("value")) {
 			s.error(w, http.StatusBadRequest, errMissingRequiredParams)
 			return
@@ -179,7 +223,7 @@ func (s *server) handleConvertCurrency() http.HandlerFunc {
 			return
 		}
 
-		req := &request{
+		req := &convertCurrencyQuery{
 			CurrencyFrom: q.Get("currency_from"),
 			CurrencyTo:   q.Get("currency_to"),
 			Value:        float32(valueFloat64),
@@ -196,9 +240,9 @@ func (s *server) handleConvertCurrency() http.HandlerFunc {
 			return
 		}
 
-		res := &response{
+		res := &convertCurrencyResponse{
 			Query:            *req,
-			ConvertingResult: req.Value * rate.Value,
+			ConversionResult: req.Value * rate.Value,
 			LastUpdateTime:   rate.LastUpdateTime,
 		}
 
@@ -206,8 +250,12 @@ func (s *server) handleConvertCurrency() http.HandlerFunc {
 	}
 }
 
+type errorResponse struct {
+	Message string `json:"message"`
+}
+
 func (s *server) error(w http.ResponseWriter, statusCode int, err error) {
-	s.respond(w, statusCode, map[string]string{"error": err.Error()})
+	s.respond(w, statusCode, errorResponse{err.Error()})
 }
 
 func (s *server) respond(w http.ResponseWriter, statusCode int, data interface{}) {

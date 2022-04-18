@@ -1,0 +1,227 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple currency API that allows you to create exchange rates and convert values from one currency to another.",
+        "title": "Simple Currency API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {
+            "name": "The MIT License (MIT)",
+            "url": "https://mit-license.org/"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/convert": {
+            "get": {
+                "description": "convert the value from one currency to another according to the exchange rate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "other"
+                ],
+                "summary": "Currency conversion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The currency whose value will be converted to another currency",
+                        "name": "currency_from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The currency to which the value from the first currency will be converted",
+                        "name": "currency_to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "The value that will be converted from one currency to another",
+                        "name": "value",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.convertCurrencyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing parameters",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "There is no record of the exchange rate",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate": {
+            "post": {
+                "description": "create a record of the exchange rate between two currencies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rate"
+                ],
+                "summary": "Create an exchange rate",
+                "parameters": [
+                    {
+                        "description": "An exchange rate information",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.createRateQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Ok",
+                        "schema": {
+                            "$ref": "#/definitions/model.Rate"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing parameters or invalid payload",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "An exchange rate record with these currencies already exists",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.errorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apiserver.convertCurrencyQuery": {
+            "type": "object",
+            "properties": {
+                "currency_from": {
+                    "type": "string",
+                    "example": "RUB"
+                },
+                "currency_to": {
+                    "type": "string",
+                    "example": "RUB"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "123.321"
+                }
+            }
+        },
+        "apiserver.convertCurrencyResponse": {
+            "type": "object",
+            "properties": {
+                "conversion_result": {
+                    "type": "string",
+                    "example": "123.321"
+                },
+                "last_update_time": {
+                    "type": "string",
+                    "example": "2019-11-09T21:21:46+00:00"
+                },
+                "query": {
+                    "$ref": "#/definitions/apiserver.convertCurrencyQuery"
+                }
+            }
+        },
+        "apiserver.createRateQuery": {
+            "type": "object",
+            "properties": {
+                "first_currency": {
+                    "type": "string",
+                    "example": "RUB"
+                },
+                "second_currency": {
+                    "type": "string",
+                    "example": "USD"
+                }
+            }
+        },
+        "apiserver.errorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Rate": {
+            "type": "object",
+            "properties": {
+                "first_currency": {
+                    "type": "string",
+                    "example": "RUB"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_update_time": {
+                    "type": "string",
+                    "example": "2019-11-09T21:21:46+00:00"
+                },
+                "second_currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "value": {
+                    "type": "number",
+                    "example": 75.4
+                }
+            }
+        }
+    }
+}

@@ -9,4 +9,11 @@ run: build
 test:
 	go test -v -timeout 30s ./...
 
+swag-init:
+	swag init -g cmd/apiserver/main.go
+
+swag-fmt:
+	swag fmt -g cmd/apiserver/main.go
+
+
 .DEFAULT_GOAL := run
