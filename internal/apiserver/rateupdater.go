@@ -35,7 +35,7 @@ func (u *rateUpdater) Start() {
 		}
 
 		for _, rate := range rates {
-			response, err := getCurrencyRates(u.config.CurrencyAPIKey, rate.FirstCurrency)
+			response, err := getExchangeRates(u.config.CurrencyAPIKey, rate.FirstCurrency)
 			if err != nil {
 				u.logger.Errorf("error occurred while getting the rate info for the currency %s: %s", rate.FirstCurrency, err.Error())
 				continue
@@ -61,16 +61,16 @@ func (u *rateUpdater) Start() {
 	}
 }
 
-type currencyApiResponse struct {
-	Query query              `json:"query"`
-	Data  map[string]float32 `json:"data"`
-}
-
-type query struct {
+type getExchangeRatesQuery struct {
 	BaseCurrency string `json:"base_currency"`
 }
 
-func getCurrencyRates(currencyApiKey, baseCurrency string) (*currencyApiResponse, error) {
+type getExchangeRatesResponse struct {
+	Query getExchangeRatesQuery `json:"query"`
+	Data  map[string]float32    `json:"data"`
+}
+
+func getExchangeRates(currencyApiKey, baseCurrency string) (*getExchangeRatesResponse, error) {
 	// request to the external currency conversion API for the rates
 	rateApiRequestUrl := fmt.Sprintf(
 		"https://freecurrencyapi.net/api/v2/latest?apikey=%s&base_currency=%s",
@@ -86,12 +86,12 @@ func getCurrencyRates(currencyApiKey, baseCurrency string) (*currencyApiResponse
 
 	if res.StatusCode > 299 {
 		return nil, fmt.Errorf(
-			"error occurred while updating rate for the currency %s: response failed with status code: %d and body: %s",
+			"error occurred while updating rate for the currency %s: response failed with status code: %d and\nbody: %s\n",
 			baseCurrency, res.StatusCode, res.Body,
 		)
 	}
 
-	response := &currencyApiResponse{}
+	response := &getExchangeRatesResponse{}
 	if err = json.NewDecoder(res.Body).Decode(response); err != nil {
 		return nil, err
 	}

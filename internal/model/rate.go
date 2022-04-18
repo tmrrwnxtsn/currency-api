@@ -7,11 +7,11 @@ import (
 )
 
 type Rate struct {
-	ID             int       `json:"id"`
-	FirstCurrency  string    `json:"first_currency"`
-	SecondCurrency string    `json:"second_currency"`
-	Value          float32   `json:"value"`
-	LastUpdateTime time.Time `json:"last_update_time"`
+	ID             int       `json:"id" example:"1"`
+	FirstCurrency  string    `json:"first_currency" example:"RUB"`
+	SecondCurrency string    `json:"second_currency" example:"USD"`
+	Value          float32   `json:"value" example:"75.4"`
+	LastUpdateTime time.Time `json:"last_update_time" example:"2019-11-09T21:21:46+00:00"`
 }
 
 func (r *Rate) Validate() error {

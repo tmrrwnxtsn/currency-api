@@ -36,6 +36,14 @@ func TestServer_HandleCreateRate(t *testing.T) {
 			expectedCode: http.StatusConflict,
 		},
 		{
+			name: "identical currencies",
+			payload: map[string]string{
+				"first_currency":  "USD",
+				"second_currency": "USD",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+		{
 			name:         "invalid payload",
 			payload:      "invalid",
 			expectedCode: http.StatusBadRequest,
@@ -56,7 +64,7 @@ func TestServer_HandleCreateRate(t *testing.T) {
 			b := &bytes.Buffer{}
 			_ = json.NewEncoder(b).Encode(tc.payload)
 
-			req, _ := http.NewRequest(http.MethodPost, "/api/rate", b)
+			req, _ := http.NewRequest(http.MethodPost, "/api/v1/rate", b)
 
 			srv.ServeHTTP(rec, req)
 			assert.Equal(t, tc.expectedCode, rec.Code)
@@ -112,7 +120,7 @@ func TestServer_HandleConvertCurrency(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req, _ := http.NewRequest(http.MethodGet, "/api/convert", nil)
+			req, _ := http.NewRequest(http.MethodGet, "/api/v1/convert", nil)
 
 			q := req.URL.Query()
 			for pkey, pvalue := range tc.payload {

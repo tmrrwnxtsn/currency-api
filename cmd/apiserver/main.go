@@ -17,6 +17,17 @@ func init() {
 	flag.StringVar(&envConfigPath, "env-config-path", "configs/.env", "path to the .env config file")
 }
 
+// @title           Simple Currency API
+// @version         1.0
+// @description     This is a simple currency API that allows you to create exchange rates and convert values from one currency to another.
+// @termsOfService  http://swagger.io/terms/
+
+// @license.name  The MIT License (MIT)
+// @license.url   https://mit-license.org/
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
 func main() {
 	flag.Parse()
 
