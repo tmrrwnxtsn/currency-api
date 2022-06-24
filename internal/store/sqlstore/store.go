@@ -2,7 +2,7 @@ package sqlstore
 
 import (
 	"database/sql"
-	"github.com/tmrrwnxtsn/currency-api/internal/store"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store"
 
 	_ "github.com/lib/pq"
 )

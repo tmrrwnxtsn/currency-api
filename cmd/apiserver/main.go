@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/tmrrwnxtsn/currency-api/internal/apiserver"
-	"github.com/tmrrwnxtsn/currency-api/internal/config"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/apiserver"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/config"
 	"log"
 )
 

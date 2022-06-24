@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/tmrrwnxtsn/currency-api/internal/config"
-	"github.com/tmrrwnxtsn/currency-api/internal/model"
-	"github.com/tmrrwnxtsn/currency-api/internal/store/sqlstore"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/config"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store/sqlstore"
 	"net/http"
 	"time"
 )

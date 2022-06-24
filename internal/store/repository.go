@@ -1,6 +1,6 @@
 package store
 
-import "github.com/tmrrwnxtsn/currency-api/internal/model"
+import "github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
 
 // RateRepository ...
 type RateRepository interface {

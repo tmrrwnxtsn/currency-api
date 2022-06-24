@@ -1,4 +1,4 @@
-module github.com/tmrrwnxtsn/currency-api
+module github.com/tmrrwnxtsn/currency-conversion-api
 
 go 1.17
 

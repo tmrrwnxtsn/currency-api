@@ -2,7 +2,7 @@ package apiserver
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/tmrrwnxtsn/currency-api/internal/config"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/config"
 	"os"
 	"testing"
 )

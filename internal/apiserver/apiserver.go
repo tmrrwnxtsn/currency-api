@@ -3,8 +3,8 @@ package apiserver
 import (
 	"database/sql"
 	"github.com/sirupsen/logrus"
-	"github.com/tmrrwnxtsn/currency-api/internal/config"
-	"github.com/tmrrwnxtsn/currency-api/internal/store/sqlstore"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/config"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store/sqlstore"
 	"net/http"
 )
 

@@ -2,7 +2,7 @@ package model_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tmrrwnxtsn/currency-api/internal/model"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
 	"testing"
 	"time"
 )

@@ -2,8 +2,8 @@ package sqlstore
 
 import (
 	"database/sql"
-	"github.com/tmrrwnxtsn/currency-api/internal/model"
-	"github.com/tmrrwnxtsn/currency-api/internal/store"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store"
 )
 
 var _ store.RateRepository = (*RateRepository)(nil)

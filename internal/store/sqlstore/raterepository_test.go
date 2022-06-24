@@ -2,9 +2,9 @@ package sqlstore_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tmrrwnxtsn/currency-api/internal/model"
-	"github.com/tmrrwnxtsn/currency-api/internal/store"
-	"github.com/tmrrwnxtsn/currency-api/internal/store/sqlstore"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store/sqlstore"
 	"testing"
 	"time"
 )

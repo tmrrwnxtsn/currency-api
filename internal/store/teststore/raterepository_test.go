@@ -2,9 +2,9 @@ package teststore_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/tmrrwnxtsn/currency-api/internal/model"
-	"github.com/tmrrwnxtsn/currency-api/internal/store"
-	"github.com/tmrrwnxtsn/currency-api/internal/store/teststore"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/model"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store"
+	"github.com/tmrrwnxtsn/currency-conversion-api/internal/store/teststore"
 	"testing"
 	"time"
 )
